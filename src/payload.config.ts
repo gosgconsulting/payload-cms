@@ -61,20 +61,40 @@ export default buildConfig({
   editor: defaultLexical,
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || '',
+      // Support both Railway (DATABASE_URL) and your current setup (DATABASE_URI)
+      connectionString: process.env.DATABASE_URL || process.env.DATABASE_URI || '',
     },
+    // Disable database schema push during build to prevent connection issues
+    push: process.env.NEXT_BUILD ? false : undefined,
   }),
   collections: [Pages, Posts, Media, Categories, Users],
-  cors: [getServerSideURL()].filter(Boolean),
+  cors: [
+    getServerSideURL(),
+    process.env.NEXT_PUBLIC_SERVER_URL,
+    process.env.PAYLOAD_PUBLIC_SERVER_URL,
+  ].filter((url): url is string => Boolean(url)),
+  csrf: [
+    getServerSideURL(),
+    process.env.NEXT_PUBLIC_SERVER_URL,
+    process.env.PAYLOAD_PUBLIC_SERVER_URL,
+  ].filter((url): url is string => Boolean(url)),
   globals: [Header, Footer],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder
   ],
-  secret: process.env.PAYLOAD_SECRET,
+  secret: process.env.PAYLOAD_SECRET || '',
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
+  },
+  // Add onInit to handle build-time behavior
+  onInit: async (payload) => {
+    // Skip initialization during build
+    if (process.env.NEXT_BUILD) {
+      return
+    }
+    // Your normal init logic here (if any)
   },
   jobs: {
     access: {
