@@ -62,8 +62,7 @@ export default buildConfig({
         process.env.DATABASE_URI ||
         'postgresql://postgres:password@localhost:5432/payload',
     },
-    // Prevent database operations during build
-    push: false,
+    push: true,
   }),
   collections: [Pages, Posts, Media, Categories, Users],
   cors: [
