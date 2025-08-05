@@ -23,11 +23,7 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     components: {
-      // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
       beforeLogin: ['@/components/BeforeLogin'],
-      // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/BeforeDashboard'],
     },
     importMap: {
@@ -57,54 +53,43 @@ export default buildConfig({
       ],
     },
   },
-  // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: postgresAdapter({
     pool: {
-      // Support both Railway (DATABASE_URL) and your current setup (DATABASE_URI)
-      connectionString: process.env.DATABASE_URL || process.env.DATABASE_URI || '',
+      // Railway uses DATABASE_URL, fallback to DATABASE_URI for local
+      connectionString:
+        process.env.DATABASE_URL ||
+        process.env.DATABASE_URI ||
+        'postgresql://postgres:password@localhost:5432/payload',
     },
-    // Disable database schema push during build to prevent connection issues
-    push: process.env.NEXT_BUILD ? false : undefined,
+    // Prevent database operations during build
+    push: false,
   }),
   collections: [Pages, Posts, Media, Categories, Users],
   cors: [
     getServerSideURL(),
     process.env.NEXT_PUBLIC_SERVER_URL,
     process.env.PAYLOAD_PUBLIC_SERVER_URL,
-  ].filter((url): url is string => Boolean(url)),
+  ].filter((url): url is string => typeof url === 'string' && url.length > 0),
   csrf: [
     getServerSideURL(),
     process.env.NEXT_PUBLIC_SERVER_URL,
     process.env.PAYLOAD_PUBLIC_SERVER_URL,
-  ].filter((url): url is string => Boolean(url)),
+  ].filter((url): url is string => typeof url === 'string' && url.length > 0),
   globals: [Header, Footer],
   plugins: [
     ...plugins,
     // storage-adapter-placeholder
   ],
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: process.env.PAYLOAD_SECRET || 'fallback-secret-for-build-only',
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  // Add onInit to handle build-time behavior
-  onInit: async (payload) => {
-    // Skip initialization during build
-    if (process.env.NEXT_BUILD) {
-      return
-    }
-    // Your normal init logic here (if any)
-  },
   jobs: {
     access: {
       run: ({ req }: { req: PayloadRequest }): boolean => {
-        // Allow logged in users to execute this endpoint (default)
         if (req.user) return true
-
-        // If there is no logged in user, then check
-        // for the Vercel Cron secret to be present as an
-        // Authorization header:
         const authHeader = req.headers.get('authorization')
         return authHeader === `Bearer ${process.env.CRON_SECRET}`
       },

@@ -5,7 +5,30 @@ import React from 'react'
 import type { Header } from '@/payload-types'
 
 export async function Header() {
-  const headerData: Header = await getCachedGlobal('header', 1)()
+  // FIXED: Skip database query during build
+  if (process.env.NEXT_BUILD === 'true') {
+    // Return a minimal header during build
+    const emptyHeaderData: Header = {
+      id: '',
+      navItems: [],
+      updatedAt: '',
+      createdAt: '',
+    }
+    return <HeaderClient data={emptyHeaderData} />
+  }
 
-  return <HeaderClient data={headerData} />
+  try {
+    const headerData: Header = await getCachedGlobal('header', 1)()
+    return <HeaderClient data={headerData} />
+  } catch (error) {
+    console.warn('Could not fetch header data:', error)
+    // Fallback to empty header data
+    const emptyHeaderData: Header = {
+      id: '',
+      navItems: [],
+      updatedAt: '',
+      createdAt: '',
+    }
+    return <HeaderClient data={emptyHeaderData} />
+  }
 }
