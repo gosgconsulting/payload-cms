@@ -9,7 +9,7 @@ export async function Header() {
   if (process.env.NEXT_BUILD === 'true') {
     // Return a minimal header during build
     const emptyHeaderData: Header = {
-      id: '',
+      id: 0,
       navItems: [],
       updatedAt: '',
       createdAt: '',
@@ -24,7 +24,7 @@ export async function Header() {
     console.warn('Could not fetch header data:', error)
     // Fallback to empty header data
     const emptyHeaderData: Header = {
-      id: '',
+      id: 0,
       navItems: [],
       updatedAt: '',
       createdAt: '',
